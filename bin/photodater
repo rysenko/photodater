@@ -15,6 +15,23 @@ if (!fs.existsSync(rootPath)) {
     return;
 }
 
+var getFileDate = function (filePath, callback) {
+    new ExifImage({ image: filePath }, function (err, data) {
+        var date = data && data.exif && data.exif.CreateDate;
+        if (date) {
+            date = date.replace(':', '-').replace(':', '-');
+        }
+        callback(err, new Date(date));
+    });
+};
+
+var pad = function (val) {
+    if (val < 10) {
+        return '0' + val;
+    }
+    return val;
+};
+
 fs.readdirSync(rootPath).filter(function (folder) {
     return folder.indexOf('20') !== 0 && fs.lstatSync(path.join(rootPath, folder)).isDirectory();
 }).forEach(function (folder) {
@@ -23,8 +40,15 @@ fs.readdirSync(rootPath).filter(function (folder) {
         return path.extname(file).toLowerCase() === '.jpg' && fs.lstatSync(path.join(folderPath, file)).isFile();
     }).forEach(function (file) {
         var filePath = path.join(folderPath, file);
-        new ExifImage({ image: filePath }, function (err, data) {
-            console.log(data);
+        getFileDate(filePath, function (err, date) {
+            if (!err && date) {
+                var targetFolder = path.join(rootPath, date.getFullYear() + '-' + pad(date.getMonth() + 1) + '-' +
+                    pad(date.getDate()));
+                if (!fs.existsSync(targetFolder)) {
+                    fs.mkdirSync(targetFolder);
+                }
+                fs.renameSync(filePath, path.join(targetFolder, file));
+            }
         });
     });
 
