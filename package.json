@@ -1,0 +1,7 @@
+{
+  "name": "photodater",
+  "version": "1.0.0",
+  "dependencies": {
+    "exif": "^0.4.0"
+  }
+}

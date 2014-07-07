@@ -1,0 +1,31 @@
+#!/usr/bin/env node
+
+var fs = require('fs');
+var path = require('path');
+var ExifImage = require('exif').ExifImage;
+
+if (process.argv.length !== 3) {
+    console.log('Usage: photodater <targetFolder>\nRearranges *.JPG into YYYY-MM-DD folders');
+}
+
+var rootPath = process.argv[2];
+
+if (!fs.existsSync(rootPath)) {
+    console.error('Target folder not found');
+    return;
+}
+
+fs.readdirSync(rootPath).filter(function (folder) {
+    return folder.indexOf('20') !== 0 && fs.lstatSync(path.join(rootPath, folder)).isDirectory();
+}).forEach(function (folder) {
+    var folderPath = path.join(rootPath, folder);
+    var files = fs.readdirSync(folderPath).filter(function (file) {
+        return path.extname(file).toLowerCase() === '.jpg' && fs.lstatSync(path.join(folderPath, file)).isFile();
+    }).forEach(function (file) {
+        var filePath = path.join(folderPath, file);
+        new ExifImage({ image: filePath }, function (err, data) {
+            console.log(data);
+        });
+    });
+
+});
