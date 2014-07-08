@@ -4,14 +4,11 @@ var fs = require('fs');
 var path = require('path');
 var ExifImage = require('exif').ExifImage;
 
-if (process.argv.length !== 3) {
-    console.log('Usage: photodater <targetFolder>\nRearranges *.JPG into YYYY-MM-DD folders');
-}
-
-var rootPath = process.argv[2];
+var homePath = process.env[(process.platform == 'win32') ? 'USERPROFILE' : 'HOME'];
+var rootPath = process.argv[2] || path.join(homePath, 'Pictures');
 
 if (!fs.existsSync(rootPath)) {
-    console.error('Target folder not found');
+    console.log('Usage: photodater <targetFolder>\nRearranges *.JPG into YYYY-MM-DD folders');
     return;
 }
 
