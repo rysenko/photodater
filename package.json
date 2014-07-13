@@ -1,6 +1,6 @@
 {
   "name": "photodater",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "This tool rearranges images in the specified folder (~/Pictures by default)  into YYYY-MM-DD subfolders.",
   "repository" : {
     "type" : "git",

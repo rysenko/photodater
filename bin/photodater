@@ -37,7 +37,7 @@ fs.readdirSync(rootPath).filter(function (folder) {
 }).forEach(function (folder) {
     var folderPath = path.join(rootPath, folder);
     var leftFiles = fs.readdirSync(folderPath).filter(function (file) {
-        if (path.extname(file).toLowerCase() !== '.jpg' || !fs.lstatSync(path.join(folderPath, file)).isFile()) {
+        if (path.extname(file).toLowerCase() !== '.jpg') {
             return true;
         }
         var filePath = path.join(folderPath, file);
@@ -49,9 +49,8 @@ fs.readdirSync(rootPath).filter(function (folder) {
                 fs.mkdirSync(targetFolder);
             }
             fs.renameSync(filePath, path.join(targetFolder, file));
-            return true;
         }
-        return false;
+        return !date;
     });
     if (leftFiles.length === 0) {
         fs.rmdirSync(folderPath);
