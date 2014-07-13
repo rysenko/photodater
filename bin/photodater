@@ -2,6 +2,7 @@
 
 var fs = require('fs');
 var path = require('path');
+var deasync = require('deasync');
 var ExifImage = require('exif').ExifImage;
 
 var homePath = process.env[(process.platform == 'win32') ? 'USERPROFILE' : 'HOME'];
@@ -12,7 +13,7 @@ if (!fs.existsSync(rootPath)) {
     return;
 }
 
-var getFileDate = function (filePath, callback) {
+var getFileDateAsync = function (filePath, callback) {
     new ExifImage({ image: filePath }, function (err, data) {
         var date = data && data.exif && data.exif.CreateDate;
         if (date) {
@@ -21,6 +22,8 @@ var getFileDate = function (filePath, callback) {
         callback(err, new Date(date));
     });
 };
+
+var getFileDate = deasync(getFileDateAsync);
 
 var pad = function (val) {
     if (val < 10) {
@@ -33,20 +36,24 @@ fs.readdirSync(rootPath).filter(function (folder) {
     return folder.indexOf('20') !== 0 && fs.lstatSync(path.join(rootPath, folder)).isDirectory();
 }).forEach(function (folder) {
     var folderPath = path.join(rootPath, folder);
-    var files = fs.readdirSync(folderPath).filter(function (file) {
-        return path.extname(file).toLowerCase() === '.jpg' && fs.lstatSync(path.join(folderPath, file)).isFile();
-    }).forEach(function (file) {
+    var leftFiles = fs.readdirSync(folderPath).filter(function (file) {
+        if (path.extname(file).toLowerCase() !== '.jpg' || !fs.lstatSync(path.join(folderPath, file)).isFile()) {
+            return true;
+        }
         var filePath = path.join(folderPath, file);
-        getFileDate(filePath, function (err, date) {
-            if (!err && date) {
-                var targetFolder = path.join(rootPath, date.getFullYear() + '-' + pad(date.getMonth() + 1) + '-' +
-                    pad(date.getDate()));
-                if (!fs.existsSync(targetFolder)) {
-                    fs.mkdirSync(targetFolder);
-                }
-                fs.renameSync(filePath, path.join(targetFolder, file));
+        var date = getFileDate(filePath);
+        if (date) {
+            var targetFolder = path.join(rootPath, date.getFullYear() + '-' + pad(date.getMonth() + 1) + '-' +
+                pad(date.getDate()));
+            if (!fs.existsSync(targetFolder)) {
+                fs.mkdirSync(targetFolder);
             }
-        });
+            fs.renameSync(filePath, path.join(targetFolder, file));
+            return true;
+        }
+        return false;
     });
-
+    if (leftFiles.length === 0) {
+        fs.rmdirSync(folderPath);
+    }
 });

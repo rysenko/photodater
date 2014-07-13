@@ -1,0 +1,1 @@
+This tool rearranges images in the specified folder (~/Pictures by default)  into YYYY-MM-DD subfolders.

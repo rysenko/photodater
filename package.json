@@ -1,7 +1,13 @@
 {
   "name": "photodater",
-  "version": "1.0.2",
+  "version": "1.0.3",
+  "description": "This tool rearranges images in the specified folder (~/Pictures by default)  into YYYY-MM-DD subfolders.",
+  "repository" : {
+    "type" : "git",
+    "url" : "https://github.com/rysenko/photodater.git"
+  },
   "dependencies": {
+    "deasync": "0.0.7",
     "exif": "^0.4.0"
   },
   "directories": {
