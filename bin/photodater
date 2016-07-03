@@ -9,15 +9,26 @@ var homePath = process.env[(process.platform == 'win32') ? 'USERPROFILE' : 'HOME
 var rootPath = process.argv[2] || path.join(homePath, 'Pictures');
 
 if (!fs.existsSync(rootPath)) {
-    console.log('Usage: photodater <targetFolder>\nRearranges *.JPG into YYYY-MM-DD folders');
+    console.log('Usage: photodater <targetFolder>\nRearranges *.JPG and *.MOV into YYYY-MM-DD folders');
     return;
 }
 
+var getFileCreatedAsync = function (filePath, callback) {
+    var stats = fs.lstatSync(filePath);
+    callback(null, stats.birthtime || stats.ctime);
+};
+
 var getFileDateAsync = function (filePath, callback) {
+    if (filePath.toLowerCase().indexOf('.jpg') === -1) {
+        return getFileCreatedAsync(filePath, callback);
+    }
     new ExifImage({ image: filePath }, function (err, data) {
         var date = data && data.exif && data.exif.CreateDate;
         if (date) {
             date = date.replace(':', '-').replace(':', '-');
+        }
+        if (!date) {
+            return getFileCreatedAsync(filePath, callback);
         }
         callback(err, new Date(date));
     });
@@ -37,7 +48,8 @@ fs.readdirSync(rootPath).filter(function (folder) {
 }).forEach(function (folder) {
     var folderPath = path.join(rootPath, folder);
     var leftFiles = fs.readdirSync(folderPath).filter(function (file) {
-        if (path.extname(file).toLowerCase() !== '.jpg') {
+        var ext = path.extname(file).toLowerCase();
+        if (ext !== '.jpg' && ext !== '.mov' && ext !== '.png') {
             return true;
         }
         var filePath = path.join(folderPath, file);
