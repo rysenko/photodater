@@ -9,7 +9,7 @@ var homePath = process.env[(process.platform == 'win32') ? 'USERPROFILE' : 'HOME
 var rootPath = process.argv[2] || path.join(homePath, 'Pictures');
 
 if (!fs.existsSync(rootPath)) {
-    console.log('Usage: photodater <targetFolder>\nRearranges *.JPG and *.MOV into YYYY-MM-DD folders');
+    console.log('Usage: photodater <targetFolder>\nRearranges *.JPG, *.HEIC and *.MOV into YYYY-MM-DD folders');
     return;
 }
 
@@ -19,7 +19,19 @@ var getFileCreatedAsync = function (filePath, callback) {
 };
 
 var getFileDateAsync = function (filePath, callback) {
-    if (filePath.toLowerCase().indexOf('.jpg') === -1) {
+    var lowerCasePath = filePath.toLowerCase();
+    if (lowerCasePath.indexOf('.mov') !== -1) {
+        var pathWithEmptyExtension = filePath.substr(0, filePath.length - 3);
+        if (fs.existsSync(pathWithEmptyExtension + 'jpg')) {
+            return getFileDateAsync(pathWithEmptyExtension + 'jpg', callback);
+        } else if (fs.existsSync(pathWithEmptyExtension + 'JPG')) {
+            return getFileDateAsync(pathWithEmptyExtension + 'JPG', callback);
+        } else if (fs.existsSync(pathWithEmptyExtension + 'HEIC')) {
+            return getFileDateAsync(pathWithEmptyExtension + 'HEIC', callback);
+        } else {
+            return getFileCreatedAsync(filePath, callback);
+        }
+    } else if (lowerCasePath.indexOf('.jpg') === -1 && lowerCasePath.indexOf('.heic') === -1) {
         return getFileCreatedAsync(filePath, callback);
     }
     new ExifImage({ image: filePath }, function (err, data) {
@@ -47,9 +59,10 @@ fs.readdirSync(rootPath).filter(function (folder) {
     return folder.indexOf('20') !== 0 && fs.lstatSync(path.join(rootPath, folder)).isDirectory();
 }).forEach(function (folder) {
     var folderPath = path.join(rootPath, folder);
+    var filesToRename = [];
     var leftFiles = fs.readdirSync(folderPath).filter(function (file) {
         var ext = path.extname(file).toLowerCase();
-        if (ext !== '.jpg' && ext !== '.mov' && ext !== '.png') {
+        if (ext !== '.jpg' && ext !== '.heic' && ext !== '.mov' && ext !== '.png') {
             return true;
         }
         var filePath = path.join(folderPath, file);
@@ -60,9 +73,12 @@ fs.readdirSync(rootPath).filter(function (folder) {
             if (!fs.existsSync(targetFolder)) {
                 fs.mkdirSync(targetFolder);
             }
-            fs.renameSync(filePath, path.join(targetFolder, file));
+            filesToRename.push({from: filePath, to: path.join(targetFolder, file)});
         }
         return !date;
+    });
+    filesToRename.forEach(function (renameFile) {
+        fs.renameSync(renameFile.from, renameFile.to);
     });
     if (leftFiles.length === 0) {
         fs.rmdirSync(folderPath);
