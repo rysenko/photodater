@@ -9,7 +9,7 @@ var homePath = process.env[(process.platform == 'win32') ? 'USERPROFILE' : 'HOME
 var rootPath = process.argv[2] || path.join(homePath, 'Pictures');
 
 if (!fs.existsSync(rootPath)) {
-    console.log('Usage: photodater <targetFolder>\nRearranges *.JPG, *.HEIC and *.MOV into YYYY-MM-DD folders');
+    console.log('Usage: photodater <targetFolder>\nRearranges *.JPG, *.JPEG, *.HEIC and *.MOV into YYYY-MM-DD folders');
     return;
 }
 
@@ -26,12 +26,16 @@ var getFileDateAsync = function (filePath, callback) {
             return getFileDateAsync(pathWithEmptyExtension + 'jpg', callback);
         } else if (fs.existsSync(pathWithEmptyExtension + 'JPG')) {
             return getFileDateAsync(pathWithEmptyExtension + 'JPG', callback);
+        } else if (fs.existsSync(pathWithEmptyExtension + 'jpeg')) {
+            return getFileDateAsync(pathWithEmptyExtension + 'jpeg', callback);
+        } else if (fs.existsSync(pathWithEmptyExtension + 'JPEG')) {
+            return getFileDateAsync(pathWithEmptyExtension + 'JPEG', callback);
         } else if (fs.existsSync(pathWithEmptyExtension + 'HEIC')) {
             return getFileDateAsync(pathWithEmptyExtension + 'HEIC', callback);
         } else {
             return getFileCreatedAsync(filePath, callback);
         }
-    } else if (lowerCasePath.indexOf('.jpg') === -1 && lowerCasePath.indexOf('.heic') === -1) {
+    } else if (lowerCasePath.indexOf('.jpg') === -1 && lowerCasePath.indexOf('.jpeg') === -1 && lowerCasePath.indexOf('.heic') === -1) {
         return getFileCreatedAsync(filePath, callback);
     }
     new ExifImage({ image: filePath }, function (err, data) {
@@ -62,7 +66,7 @@ fs.readdirSync(rootPath).filter(function (folder) {
     var filesToRename = [];
     var leftFiles = fs.readdirSync(folderPath).filter(function (file) {
         var ext = path.extname(file).toLowerCase();
-        if (ext !== '.jpg' && ext !== '.heic' && ext !== '.mov' && ext !== '.png') {
+        if (ext !== '.jpg' && ext !== '.jpeg' && ext !== '.heic' && ext !== '.mov' && ext !== '.png') {
             return true;
         }
         var filePath = path.join(folderPath, file);
